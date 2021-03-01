@@ -14,6 +14,7 @@ parser.add_argument(
     '-o', '--output-csv', default='mini_data.csv'
 )
 
+players = ['kyledeanreinford', 'Ericki', 'jalopey', 'willardsmith', 'conor', 'Mark Miller', 'Szakonyi', 'd’Anthony' ]
 
 def login(username, password):
     login_resp = requests.post(
@@ -50,12 +51,12 @@ def get_mini_times(cookie):
     for solver in solvers:
         name = solver.find('p', class_='lbd-score__name').text.strip()
         time = solver.find('p', class_='lbd-score__time').text.strip()
-        rank = solver.find('p', class_='lbd-score__rank').text.strip()
-        if rank:
-            print(rank, name, time)
-        else:
-            print("tied", name, time)
-        
+        if name.endswith("(you)"):
+            name_split = name.split()
+            name = name_split[0]
+        if name in players:
+            print(name, time)
+            
 
 if __name__ == '__main__':
     args = parser.parse_args()
