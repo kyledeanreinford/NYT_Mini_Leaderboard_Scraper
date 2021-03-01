@@ -1,0 +1,1 @@
+# NYT Mini Leaderboard Scraper
