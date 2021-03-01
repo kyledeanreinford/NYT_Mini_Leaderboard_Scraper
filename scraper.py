@@ -3,6 +3,7 @@ import requests
 import csv
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as soup 
+from datetime import datetime
 
 parser = argparse.ArgumentParser(description="Get Mini Times")
 parser.add_argument(
@@ -10,7 +11,7 @@ parser.add_argument(
 parser.add_argument(
     '-p', '--password', required=True)
 parser.add_argument(
-    '-o', '--output-csv', default='data.csv'
+    '-o', '--output-csv', default='mini_data.csv'
 )
 
 
@@ -40,12 +41,21 @@ def get_mini_times(cookie):
     )
     page = soup(response.content, features='html.parser')
     solvers = page.find_all('div', class_='lbd-score')
+    current_datetime = datetime.now()
+    month = str(current_datetime.strftime("%m"))
+    day = str(current_datetime.strftime("%d"))
+    year = str(current_datetime.strftime("%Y"))
+    print('--------------------------')
+    print("Mini Times for " + month + '-' + day + '-' + year)
     for solver in solvers:
         name = solver.find('p', class_='lbd-score__name').text.strip()
         time = solver.find('p', class_='lbd-score__time').text.strip()
         rank = solver.find('p', class_='lbd-score__rank').text.strip()
-        print(name, time, rank)
-    
+        if rank:
+            print(rank, name, time)
+        else:
+            print("tied", name, time)
+        
 
 if __name__ == '__main__':
     args = parser.parse_args()
