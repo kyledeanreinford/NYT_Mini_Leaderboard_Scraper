@@ -1,7 +1,6 @@
 import argparse
 import requests
 import csv
-from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as soup 
 from datetime import datetime
 
