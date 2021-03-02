@@ -11,7 +11,7 @@ parser.add_argument(
 parser.add_argument(
     '-p', '--password', required=True)
 parser.add_argument(
-    '-o', '--output-csv', default='mini_data.csv'
+    '-o', '--output', default='mini_data.csv'
 )
 
 players = ['kyledeanreinford', 'Ericki', 'jalopey', 'willardsmith', 'conor', 'Mark Miller', 'Szakonyi', 'd’Anthony' ]
@@ -34,7 +34,7 @@ def login(username, password):
             return cookie['cipheredValue']
     raise ValueError('NYT-S cookie not found')
 
-def get_mini_times(cookie):
+def get_mini_times(cookie,output):
     url = "https://www.nytimes.com/puzzles/leaderboards"
     response = requests.get(url, cookies={
         'NYT-S': cookie,
@@ -46,20 +46,26 @@ def get_mini_times(cookie):
     month = str(current_datetime.strftime("%m"))
     day = str(current_datetime.strftime("%d"))
     year = str(current_datetime.strftime("%Y"))
+    daytimes=[]
     print('--------------------------')
     print("Mini Times for " + month + '-' + day + '-' + year)
     for solver in solvers:
         name = solver.find('p', class_='lbd-score__name').text.strip()
-        time = solver.find('p', class_='lbd-score__time').text.strip()
+        try:
+            time = solver.find('p', class_='lbd-score__time').text.strip()
+        except:
+            time="--"
         if name.endswith("(you)"):
             name_split = name.split()
             name = name_split[0]
         if name in players:
-            print(name, time)
+            daytimes.append([month,day,year,name,time])
+    with open(output, 'w') as csvfile:  
+        csvwriter = csv.writer(csvfile)              
+        csvwriter.writerows(daytimes) 
             
-
 if __name__ == '__main__':
     args = parser.parse_args()
     cookie = login(args.username, args.password)
-    get_mini_times(cookie)
+    get_mini_times(cookie,args.output)
     
