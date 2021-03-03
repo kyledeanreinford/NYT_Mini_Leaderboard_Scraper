@@ -1,8 +1,14 @@
 import argparse
 import requests
 import csv
+from psycopg2 import sql
 from bs4 import BeautifulSoup as soup 
 from datetime import datetime
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
+
+engine = create_engine('postgresql://miniadmin:acab@localhost:5432/minitimesdb')
+db = scoped_session(sessionmaker(bind=engine))
 
 parser = argparse.ArgumentParser(description="Get Mini Times")
 parser.add_argument(
@@ -41,13 +47,21 @@ def get_mini_times(cookie,output):
     )
     page = soup(response.content, features='html.parser')
     solvers = page.find_all('div', class_='lbd-score')
+
+    # create datetime variables
     current_datetime = datetime.now()
     month = str(current_datetime.strftime("%m"))
     day = str(current_datetime.strftime("%d"))
     year = str(current_datetime.strftime("%Y"))
     daytimes=[]
-    print('--------------------------')
-    print("Mini Times for " + month + '-' + day + '-' + year)
+
+    # create sql table
+    db.execute("""CREATE TABLE IF NOT EXISTS solves (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        time INTEGER,
+        date DATE NOT NULL DEFAULT CURRENT_DATE);""")
+    db.commit()
     for solver in solvers:
         name = solver.find('p', class_='lbd-score__name').text.strip()
         try:
@@ -59,10 +73,14 @@ def get_mini_times(cookie,output):
             name = name_split[0]
         if name in players:
             daytimes.append([month,day,year,name,time])
-    with open(output, 'w') as csvfile:  
-        csvwriter = csv.writer(csvfile)              
-        csvwriter.writerows(daytimes) 
+            ### Keep getting 'tuple' error here ###
+            db.execute("INSERT INTO solves (name, time) VALUES (?, ?)", (name, time))
+            db.commit()
             
+    # with open(output, 'w') as csvfile:  
+    #     csvwriter = csv.writer(csvfile)              
+    #     csvwriter.writerows(daytimes) 
+
 if __name__ == '__main__':
     args = parser.parse_args()
     cookie = login(args.username, args.password)
