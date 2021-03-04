@@ -9,6 +9,7 @@ from sqlalchemy import Column, String, Integer, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+
 engine = 'postgresql://miniadmin:acab@localhost:5432/minitimesdb'
 db = create_engine(engine)
 base = declarative_base()
