@@ -5,10 +5,27 @@ from psycopg2 import sql
 from bs4 import BeautifulSoup as soup 
 from datetime import datetime
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import Column, String, Integer, Date
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('postgresql://miniadmin:acab@localhost:5432/minitimesdb')
-db = scoped_session(sessionmaker(bind=engine))
+engine = 'postgresql://miniadmin:acab@localhost:5432/minitimesdb'
+db = create_engine(engine)
+base = declarative_base()
+
+class Player(base):
+    __tablename__ = 'solves'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    time = Column(String)
+    date = Column(Date)
+
+Session = sessionmaker(db)
+session = Session()
+
+base.metadata.create_all(db)
+
 
 parser = argparse.ArgumentParser(description="Get Mini Times")
 parser.add_argument(
@@ -53,30 +70,26 @@ def get_mini_times(cookie,output):
     month = str(current_datetime.strftime("%m"))
     day = str(current_datetime.strftime("%d"))
     year = str(current_datetime.strftime("%Y"))
+    date = month + "-" + day + "-" + year
     daytimes=[]
-
-    # create sql table
-    db.execute("""CREATE TABLE IF NOT EXISTS solves (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR NOT NULL,
-        time INTEGER,
-        date DATE NOT NULL DEFAULT CURRENT_DATE);""")
-    db.commit()
     for solver in solvers:
         name = solver.find('p', class_='lbd-score__name').text.strip()
         try:
             time = solver.find('p', class_='lbd-score__time').text.strip()
+            time_split = time.split(":")
+            time = (int(time_split[0]) * 60) + int(time_split[1])
         except:
             time="--"
         if name.endswith("(you)"):
             name_split = name.split()
             name = name_split[0]
         if name in players:
-            daytimes.append([month,day,year,name,time])
-            ### Keep getting 'tuple' error here ###
-            db.execute("INSERT INTO solves (name, time) VALUES (?, ?)", (name, time))
-            db.commit()
-            
+            entry = Player(name=name, time=time, date=date)
+            session.add(entry)
+            session.commit()
+
+            # # daytimes.append([month,day,year,name,time])
+
     # with open(output, 'w') as csvfile:  
     #     csvwriter = csv.writer(csvfile)              
     #     csvwriter.writerows(daytimes) 
