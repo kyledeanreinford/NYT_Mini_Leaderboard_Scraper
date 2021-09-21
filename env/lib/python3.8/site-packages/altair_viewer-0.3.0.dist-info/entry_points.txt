@@ -1,0 +1,3 @@
+[altair.vegalite.v4.renderer]
+altair_viewer = altair_viewer:render
+
